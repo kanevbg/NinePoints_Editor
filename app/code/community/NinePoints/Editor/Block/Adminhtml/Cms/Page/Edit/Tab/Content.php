@@ -10,52 +10,28 @@ class NinePoints_Editor_Block_Adminhtml_Cms_Page_Edit_Tab_Content extends Mage_A
 {
     protected function _prepareForm()
     {
-        /** @var $model Mage_Cms_Model_Page */
-        $model = Mage::registry('cms_page');
+        // Execute Magento logic:
+        parent::_prepareForm();
 
-        /*
-         * Checking if user have permissions to save information
-         */
-        if ($this->_isAllowedAction('save')) {
-            $isElementDisabled = false;
-        } else {
-            $isElementDisabled = true;
-        }
+        // Reset the "content" field
+        $fieldset = $this->getForm()->getElement('content_fieldset');
 
-        $form = new Varien_Data_Form();
-        $form->setHtmlIdPrefix('page_');
+        $contentValue = $this->getForm()->getElement('content')->getValue();
+        $editorDisabled = $this->getForm()->getElement('content')->getData('disabled');
+        $editorConfig = $this->getForm()->getElement('content')->getData('config');
+        $fieldset->removeField('content');
 
-        $fieldset = $form->addFieldset('content_fieldset', array('legend'=>Mage::helper('cms')->__('Content'),'class'=>'fieldset-wide'));
-        $fieldset->addType('ckeditor',  Mage::getConfig()->getBlockClassName('npeditor/adminhtml_form_element_ckeditor'));
-        $wysiwygConfig = Mage::getSingleton('cms/wysiwyg_config')->getConfig(
-            array('tab_id' => $this->getTabId())
-        );
+        $fieldset->addType('ckeditor', Mage::getConfig()->getBlockClassName('npeditor/adminhtml_form_element_ckeditor'));
 
-        $fieldset->addField('content_heading', 'text', array(
-            'name'      => 'content_heading',
-            'label'     => Mage::helper('cms')->__('Content Heading'),
-            'title'     => Mage::helper('cms')->__('Content Heading'),
-            'disabled'  => $isElementDisabled
-        ));
-
-        $contentField = $fieldset->addField('content', 'ckeditor', array(
+        $fieldset->addField('content', 'ckeditor', array(
             'name'      => 'content',
             'style'     => 'height:36em;',
             'required'  => true,
-            'disabled'  => $isElementDisabled,
-            'config'    => $wysiwygConfig
+            'disabled'  => $editorDisabled,
+            'config'    => $editorConfig,
+            'value' => $contentValue,
         ));
 
-        // Setting custom renderer for content field to remove label column
-        $renderer = $this->getLayout()->createBlock('adminhtml/widget_form_renderer_fieldset_element')
-            ->setTemplate('cms/page/edit/form/renderer/content.phtml');
-        $contentField->setRenderer($renderer);
-
-        $form->setValues($model->getData());
-        $this->setForm($form);
-
-        Mage::dispatchEvent('adminhtml_cms_page_edit_tab_content_prepare_form', array('form' => $form));
-
-        //return parent::_prepareForm();
+        return $this;
     }
 }
